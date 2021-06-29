@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const pinRoute = require("./routes/pins");
+const userRoute = require("./routes/user");
 const app = express();
 
 app.use(express.json());
@@ -20,6 +21,8 @@ mongoose
 	});
 
 app.use("/api/pins", pinRoute);
+
+app.use("/api/users", userRoute);
 
 app.listen(8080, () => {
 	console.log("server started");
