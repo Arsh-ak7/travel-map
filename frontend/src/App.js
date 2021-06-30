@@ -4,13 +4,21 @@ import RoomIcon from "@material-ui/icons/Room";
 import StarIcon from "@material-ui/icons/Star";
 import Axios from "axios";
 import { format } from "timeago.js";
+import Register from "./components/Register";
+import Login from "./components/Login";
 import "./app.css";
 
 function App() {
-	const [currentUser, setCurrentUser] = useState("Arsh");
+	const myStorage = window.localStorage;
+	const [currentUser, setCurrentUser] = useState(myStorage.getItem("user"));
 	const [pins, setPins] = useState([]);
 	const [currentPlaceId, setCurrentPlaceId] = useState(null);
 	const [newPlace, setNewPlace] = useState(null);
+	const [title, setTitle] = useState("");
+	const [desc, setDesc] = useState("");
+	const [rating, setRating] = useState(0);
+	const [showRegister, setShowRegister] = useState(false);
+	const [showLogin, setShowLogin] = useState(false);
 	const [viewport, setViewport] = useState({
 		height: "100vh",
 		width: "100vw",
@@ -44,13 +52,38 @@ function App() {
 		});
 	};
 
+	const handleSubmit = async (e) => {
+		e.preventDefault();
+		const newPin = {
+			username: currentUser,
+			title,
+			desc,
+			rating,
+			lat: newPlace.lat,
+			long: newPlace.long,
+		};
+
+		try {
+			const res = await Axios.post("/pins", newPin);
+			setPins([...pins, res.data]);
+			setNewPlace(null);
+		} catch (err) {
+			console.log(err);
+		}
+	};
+
+	const handleLogout = () => {
+		myStorage.removeItem("user");
+		setCurrentUser(null);
+	};
+
 	return (
 		<div className='App'>
 			<ReactMapGL
 				{...viewport}
 				width='100vw'
 				height='100vh'
-				transitionDuration='700'
+				transitionDuration='300'
 				mapboxApiAccessToken={process.env.REACT_APP_MAPBOX}
 				onViewportChange={(viewport) => setViewport(viewport)}
 				mapStyle='mapbox://styles/arsh-ak7/ckqi1dldb05q217rr6vfq76j3'
@@ -60,8 +93,8 @@ function App() {
 						<Marker
 							latitude={p.lat}
 							longitude={p.long}
-							offsetLeft={-20}
-							offsetTop={-10}>
+							offsetLeft={-viewport.zoom * 3.5}
+							offsetTop={-viewport.zoom * 7}>
 							<RoomIcon
 								style={{
 									fontSize: viewport.zoom * 7,
@@ -109,13 +142,19 @@ function App() {
 						onClose={() => setNewPlace(null)}
 						anchor='left'>
 						<div>
-							<form>
+							<form onSubmit={handleSubmit}>
 								<lable>Title</lable>
-								<input placeholder='Enter a title' />
+								<input
+									placeholder='Enter a title'
+									onChange={(e) => setTitle(e.target.value)}
+								/>
 								<lable>Review</lable>
-								<textarea placeholder='Say us something about it' />
+								<textarea
+									placeholder='Say us something about it'
+									onChange={(e) => setDesc(e.target.value)}
+								/>
 								<lable>Rating</lable>
-								<select>
+								<select onChange={(e) => setRating(e.target.value)}>
 									<option value='1'>1</option>
 									<option value='2'>2</option>
 									<option value='3'>3</option>
@@ -128,6 +167,39 @@ function App() {
 							</form>
 						</div>
 					</Popup>
+				)}
+
+				{currentUser ? (
+					<button className='button logout' onClick={handleLogout}>
+						Log Out
+					</button>
+				) : (
+					<div className='buttons'>
+						<button
+							className='button login'
+							onClick={() => {
+								setShowLogin(true);
+								setShowRegister(false);
+							}}>
+							Login
+						</button>
+						<button
+							className='button register'
+							onClick={() => {
+								setShowLogin(false);
+								setShowRegister(true);
+							}}>
+							Register
+						</button>
+					</div>
+				)}
+				{showRegister && <Register setShowRegister={setShowRegister} />}
+				{showLogin && (
+					<Login
+						setShowLogin={setShowLogin}
+						myStorage={myStorage}
+						setCurrentUser={setCurrentUser}
+					/>
 				)}
 			</ReactMapGL>
 		</div>
