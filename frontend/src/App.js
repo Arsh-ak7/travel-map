@@ -7,8 +7,10 @@ import { format } from "timeago.js";
 import "./app.css";
 
 function App() {
+	const [currentUser, setCurrentUser] = useState("Arsh");
 	const [pins, setPins] = useState([]);
 	const [currentPlaceId, setCurrentPlaceId] = useState(null);
+	const [newPlace, setNewPlace] = useState(null);
 	const [viewport, setViewport] = useState({
 		height: "100vh",
 		width: "100vw",
@@ -21,7 +23,6 @@ function App() {
 		const getPins = async () => {
 			try {
 				const res = await Axios.get("/pins");
-				console.log(res);
 				setPins(res.data);
 			} catch (err) {
 				console.log(err);
@@ -30,8 +31,17 @@ function App() {
 		getPins();
 	}, []);
 
-	const handleMarkerClick = (id) => {
+	const handleMarkerClick = (id, lat, long) => {
 		setCurrentPlaceId(id);
+		setViewport({ ...viewport, latitude: lat, longitude: long });
+	};
+
+	const handleAddClick = (e) => {
+		const [long, lat] = e.lngLat;
+		setNewPlace({
+			lat,
+			long,
+		});
 	};
 
 	return (
@@ -40,9 +50,11 @@ function App() {
 				{...viewport}
 				width='100vw'
 				height='100vh'
+				transitionDuration='700'
 				mapboxApiAccessToken={process.env.REACT_APP_MAPBOX}
 				onViewportChange={(viewport) => setViewport(viewport)}
-				mapStyle='mapbox://styles/arsh-ak7/ckqi1dldb05q217rr6vfq76j3'>
+				mapStyle='mapbox://styles/arsh-ak7/ckqi1dldb05q217rr6vfq76j3'
+				onDblClick={handleAddClick}>
 				{pins.map((p) => (
 					<>
 						<Marker
@@ -51,8 +63,12 @@ function App() {
 							offsetLeft={-20}
 							offsetTop={-10}>
 							<RoomIcon
-								style={{ fontSize: viewport.zoom * 7 }}
-								onClick={() => handleMarkerClick(p._id)}
+								style={{
+									fontSize: viewport.zoom * 7,
+									color: p.username === currentUser ? "tomato" : "slateblue",
+									cursor: "pointer",
+								}}
+								onClick={() => handleMarkerClick(p._id, p.lat, p.long)}
 							/>
 						</Marker>
 						{p._id === currentPlaceId && (
@@ -60,7 +76,7 @@ function App() {
 								latitude={p.lat}
 								longitude={p.long}
 								closeButton={true}
-								closeOnClick={true}
+								closeOnClick={false}
 								onClose={() => setCurrentPlaceId(null)}
 								anchor='left'>
 								<div className='card'>
@@ -84,6 +100,35 @@ function App() {
 						)}
 					</>
 				))}
+				{newPlace && (
+					<Popup
+						latitude={newPlace.lat}
+						longitude={newPlace.long}
+						closeButton={true}
+						closeOnClick={false}
+						onClose={() => setNewPlace(null)}
+						anchor='left'>
+						<div>
+							<form>
+								<lable>Title</lable>
+								<input placeholder='Enter a title' />
+								<lable>Review</lable>
+								<textarea placeholder='Say us something about it' />
+								<lable>Rating</lable>
+								<select>
+									<option value='1'>1</option>
+									<option value='2'>2</option>
+									<option value='3'>3</option>
+									<option value='4'>4</option>
+									<option value='5'>5</option>
+								</select>
+								<button className='submitButton' type='submit'>
+									Add Pin
+								</button>
+							</form>
+						</div>
+					</Popup>
+				)}
 			</ReactMapGL>
 		</div>
 	);
