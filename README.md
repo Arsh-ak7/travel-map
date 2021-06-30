@@ -4,5 +4,5 @@
 
 ##### A screenshot of the Website
 
-![ScreenShot of Travel Map](https://github.com/Arsh-ak7/Learningreact/blob/main/travel-map/Travel-Log.png)
+![ScreenShot of Travel Map](https://github.com/Arsh-ak7/travel-map/blob/master/Travel-Log.png)
 
